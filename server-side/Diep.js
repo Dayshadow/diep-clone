@@ -1,4 +1,4 @@
-
+var utils = require("./serverutils.js");
 module.exports = {
     Tank: class {
         constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, ID) {
@@ -22,19 +22,43 @@ module.exports = {
             this.dx *= 0.93;
             this.dy *= 0.93;
         }
+        collisionDetect(q) {
+            let canidates = q.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);
+            for (let tank of canidates) {
+                if (utils.dist(this.x, this.y, tank.x, tank.y) < this.r * 2) {
+                    let angle = Math.atan2(this.y - tank.y, this.x - tank.x);
+                    this.dx += Math.cos(angle) / 8;
+                    this.dy += Math.sin(angle) / 8;
+                    tank.dx += Math.cos(angle + Math.PI) / 8;
+                    tank.dy += Math.sin(angle + Math.PI) / 8;
+
+                }
+            }
+        }
         handleInputs(inputs) {
             this.angle = Math.atan2(inputs.mouse.y - this.y, inputs.mouse.x - this.x);
+            let tmpVector = { x: 0, y: 0 };
+            let movKeyPressed = false;
             if (inputs.keys.includes("w")) {
-                this.dy -= this.moveSpeed;
+                tmpVector.y -= 1;
+                movKeyPressed = true;
             }
             if (inputs.keys.includes("a")) {
-                this.dx -= this.moveSpeed;
+                tmpVector.x -= 1;
+                movKeyPressed = true;
             }
             if (inputs.keys.includes("s")) {
-                this.dy += this.moveSpeed;
+                tmpVector.y += 1;
+                movKeyPressed = true;
             }
             if (inputs.keys.includes("d")) {
-                this.dx += this.moveSpeed;
+                tmpVector.x += 1;
+                movKeyPressed = true;
+            }
+            if (movKeyPressed) {
+                let movAngle = Math.atan2(tmpVector.y, tmpVector.x);
+                this.dx += Math.cos(movAngle) * this.moveSpeed;
+                this.dy += Math.sin(movAngle) * this.moveSpeed;
             }
         }
     },

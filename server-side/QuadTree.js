@@ -1,4 +1,4 @@
-var utils = require("./serverutils.js")
+var utils = require("./serverutils.js");
 module.exports = {
     QuadTree: class {
         constructor(x, y, w, h, maxPoints, isInitial) {

@@ -27,7 +27,6 @@ wss.on("connection", (ws) => {
             let tank = findTankByID(msg.ID);
             // Handle player inputs and update tank
             tank.handleInputs(msg);
-            tank.update();
         }
 
     });
@@ -44,8 +43,12 @@ function serverLoop() {
     f++;
     // Make a quadtree and insert all tanks
     q = new qt.QuadTree(0, 0, ww, wh, 2, true);
-    for (tank of tanks) {
+    for (let tank of tanks) {
         q.insert(tank);
+    }
+    for (let tank of tanks) {
+        tank.update();
+        tank.collisionDetect(q);
     }
 
     // Main loop that provides data to all of the connections
@@ -69,7 +72,7 @@ function serverLoop() {
         }
     }
 
-    setTimeout(serverLoop, 15);
+    setTimeout(serverLoop, 10);
 }
 
 // Takes FTB json and translates it into an array of diep-clone barrels
