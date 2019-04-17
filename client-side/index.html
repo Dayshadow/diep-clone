@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Diep clone testing</title>
+    <style>
+        @font-face {
+            font-family: ubuntu;
+            src: url(./resources/Ubuntu-R.ttf);
+        }
+
+        html,
+        body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background-size: cover;
+            background-image: url(./resources/factories.png);
+        }
+
+
+        canvas {
+            visibility: hidden;
+            position: absolute;
+        }
+        img {
+            visibility: hidden;
+        }
+        h1 {
+            font-family: ubuntu;
+            font-size: 56px;
+            color: rgb(255, 255, 255);
+            padding-top: 10%;
+            text-align: center;
+        }
+
+        .nicknameinput {
+            font-family: ubuntu;
+            font-size: 17px;
+            text-align: center;
+            position: fixed;
+            width: 20%;
+            height: 5%;
+            top: 48.5%;
+            left: 40%;
+        }
+
+        .ftbinput {
+            font-family: ubuntu;
+            font-size: 17px;
+            overflow-wrap: break-word;
+            position: fixed;
+            width: 40%;
+            height: 20%;
+            top: 58.5%;
+            left: 30%;
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="game"></canvas>
+    <h1 id="title">
+        Shitty diep clone
+    </h1>
+    <input id="nicknameinput" class="nicknameinput" placeholder="Nickname here..." onKeyDown="if(event.keyCode==13) startGame();">
+    <textarea id="ftbinput" class="ftbinput" placeholder="Fantasy Tank Builder JSON here...">[{"angle":0,"xoffset":0,"yoffset":0,"width":25,"baselength":65,"length":65,"basereload":120,"reload":0,"basedelay":0,"delay":0,"delayed":true,"hasKnockBack":true,"type":0,"knockback":0,"disabled":true,"spread":0,"image":"rectangle","color":"#888888","bulletColor":"#ffffff","b":[12.5,6.5,360],"damage":65,"comment":""}]</textarea>
+    <script src="./utils.js"></script>
+    <script src="./drawFunctions.js"></script>
+    <script src="./main.js"></script>
+
+</body>
+
+</html>
