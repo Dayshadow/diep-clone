@@ -22,7 +22,7 @@ wss.on("connection", (ws) => {
 
         if (msg.type === "playertank") {
             // Recieve data about the client's tank and add it to the world
-            tanks.push(new diep.Tank(ww / 2 + (Math.random() * 500 - 250), wh / 2 + (Math.random() * 500 - 250), 0, 0, 32, msg.screenWidth, msg.screenHeight, barrelsFromFTBJSON(msg.data), msg.nickname, "#00b2e1", msg.ID));
+            tanks.push(new diep.Tank(ww / 2 + (Math.random() * 500 - 250), wh / 2 + (Math.random() * 500 - 250), 0, 0, 19, msg.screenWidth, msg.screenHeight, barrelsFromFTBJSON(msg.data), msg.nickname, "#00b2e1", msg.ID));
         } else if (msg.type === "playerinputs") {
             let tank = findTankByID(msg.ID);
             // Handle player inputs and update tank
@@ -49,6 +49,12 @@ function serverLoop() {
     for (let tank of tanks) {
         tank.update();
         tank.collisionDetect(q);
+    }
+
+    if (f % 200 == 0) {
+        for (let connection of activeConnections) {
+            connection.ws.send(JSON.stringify({timestamp: new Date().getTime(), type: "ping"}));
+        }
     }
 
     // Main loop that provides data to all of the connections
@@ -80,7 +86,7 @@ function barrelsFromFTBJSON(jsonString) {
     var ret = [];
     var jsonArray = JSON.parse(jsonString);
     for (let json of jsonArray) {
-        ret.push(new diep.Barrel(json.xoffset, json.yoffset, json.width, json.length, json.angle, json.basereload, json.basedelay, json.damage, json.spread, json.type));
+        ret.push(new diep.Barrel(json.xoffset * 0.625, json.yoffset * 0.625, json.width * 0.625, json.length * 0.625, json.angle, json.basereload, json.basedelay, json.damage, json.spread, json.type));
     }
     return ret;
 }

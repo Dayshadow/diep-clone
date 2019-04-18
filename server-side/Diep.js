@@ -1,4 +1,7 @@
 var utils = require("./serverutils.js");
+Number.prototype.clamp = function (min, max) {
+    return Math.min(Math.max(this, min), max);
+};
 module.exports = {
     Tank: class {
         constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, ID) {
@@ -13,14 +16,17 @@ module.exports = {
             this.color = color;
             this.nickname = nickname;
             this.angle = 0;
-            this.moveSpeed = 0.5;
+            this.moveSpeed = 0.143;
+            this.topSpeed = 7.8;
             this.ID = ID;
         }
         update() {
             this.x += this.dx;
             this.y += this.dy;
-            this.dx *= 0.93;
-            this.dy *= 0.93;
+            this.dx = this.dx.clamp(-this.topSpeed, this.topSpeed);
+            this.dy = this.dy.clamp(-this.topSpeed, this.topSpeed);            
+            this.dx *= 0.98;
+            this.dy *= 0.98;
         }
         collisionDetect(q) {
             let canidates = q.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);

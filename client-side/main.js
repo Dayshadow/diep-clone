@@ -25,7 +25,7 @@ function startGame() {
     ctx = c.getContext('2d');
     c.width = w;
     c.height = h;
-
+    let ping = 0;
 
     ws.onmessage = (message) => {
         msg = JSON.parse(message.data);
@@ -38,6 +38,8 @@ function startGame() {
                 gameLoop();
                 looping = true;
             }
+        } else if (msg.type == "ping") {
+            ping = new Date().getTime() - msg.timestamp;
         }
     }
 
@@ -46,6 +48,8 @@ function startGame() {
         ctx.fillRect(0, 0, w, h);
         f++;
         drawBackground();
+        ctx.fillStyle = "#111111"
+        ctx.fillText(`Current ping: ${ping} ms`, w - 90, 20);
 
         ws.send(JSON.stringify({ keys: keys, mouse: { x: mouse.x + cameraPos.x - w / 2, y: mouse.y + cameraPos.y - h / 2, left: leftMouseClicked, right: rightMouseClicked }, ID, type: "playerinputs" }));
         for (tank of tanks) {
