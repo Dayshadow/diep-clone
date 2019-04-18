@@ -13,6 +13,9 @@ module.exports = {
             this.strokeStyle = "#000000";
         }
         insert(p) {
+            p.x += 0.00000001;
+            p.y += 0.00000001;
+
             if (utils.pointCollidingRect(p, this.x, this.y, this.w, this.h)) {
                 if (this.children.length > 0) {
                     for (let child of this.children) {
@@ -70,7 +73,7 @@ module.exports = {
             }
             return foundPoints;
         }
-    
+
         fetchShard(p) {
             for (let child of this.children) {
                 if (utils.pointCollidingRect(p, child.x, child.y, child.w, child.h)) {

@@ -4,15 +4,19 @@ Number.prototype.clamp = function (min, max) {
 };
 module.exports = {
     Tank: class {
-        constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, barrelColor,  ID) {
+        constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, barrelColor, ID) {
             this.x = x;
             this.y = y;
             this.dx = dx;
             this.dy = dy;
             this.r = r;
+            this.health = 100;
             this.screenWidth = screenWidth;
             this.screenHeight = screenHeight;
             this.barrels = barrels;
+            for (let barrel of this.barrels) {
+                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID };
+            }
             this.color = color;
             this.barrelColor = barrelColor;
             this.nickname = nickname;
@@ -22,27 +26,29 @@ module.exports = {
             this.ID = ID;
         }
         update() {
+            for (let barrel of this.barrels) {
+                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID };
+            }
             this.x += this.dx;
             this.y += this.dy;
             this.dx = this.dx.clamp(-this.topSpeed, this.topSpeed);
-            this.dy = this.dy.clamp(-this.topSpeed, this.topSpeed);            
+            this.dy = this.dy.clamp(-this.topSpeed, this.topSpeed);
             this.dx *= 0.98;
             this.dy *= 0.98;
         }
         collisionDetect(q) {
             let canidates = q.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);
-            for (let tank of canidates) {
-                if (utils.dist(this.x, this.y, tank.x, tank.y) < this.r * 2) {
-                    let angle = Math.atan2(this.y - tank.y, this.x - tank.x);
+            for (let object of canidates) {
+                if (utils.dist(this.x, this.y, object.x, object.y) < this.r * 2) {
+                    let angle = Math.atan2(this.y - object.y, this.x - object.x);
                     this.dx += Math.cos(angle) / 8;
                     this.dy += Math.sin(angle) / 8;
-                    tank.dx += Math.cos(angle + Math.PI) / 8;
-                    tank.dy += Math.sin(angle + Math.PI) / 8;
-
+                    object.dx += Math.cos(angle + Math.PI) / 8;
+                    object.dy += Math.sin(angle + Math.PI) / 8;
                 }
             }
         }
-        handleInputs(inputs) {
+        handleInputs(inputs, objs) {
             this.angle = Math.atan2(inputs.mouse.y - this.y, inputs.mouse.x - this.x);
             let tmpVector = { x: 0, y: 0 };
             let movKeyPressed = false;
@@ -67,6 +73,15 @@ module.exports = {
                 this.dx += Math.cos(movAngle) * this.moveSpeed;
                 this.dy += Math.sin(movAngle) * this.moveSpeed;
             }
+            if (inputs.mouse.left) {
+                for (let barrel of this.barrels) {
+                    barrel.update(objs);
+                }
+            } else {
+                for (let barrel of this.barrels) {
+                    barrel.reset();
+                }
+            }
         }
     },
 
@@ -74,27 +89,70 @@ module.exports = {
         constructor(xOffset, yOffset, width, length, angle, reload, delay, damage, spread, type) {
             this.xOffset = xOffset;
             this.yOffset = yOffset;
+            this.parent;
             this.width = width;
             this.length = length;
             this.initialLength = length;
             this.angle = angle;
-            this.initialReload = reload;
-            this.reloadCounter = 0;
-            this.initialDelay = delay;
+            this.reloadMax = reload;
+            this.reloadCounter = reload;
+            this.delayMax = delay;
             this.delayCounter = 0;
             this.damage = damage;
             this.spread = spread;
             this.type = type || 0;
         }
+        update(objs) {
+            this.delayCounter++;
+            if (this.delayCounter > this.delayMax) {
+                this.reloadCounter++;
+                if (this.reloadCounter > this.reloadMax) {
+                    this.reloadCounter = 0;
+                    this.shoot(objs);
+                }
+            }
+        }
+        reset() {
+            this.delayCounter = 0;
+            this.reloadCounter = 0;
+        }
+        shoot(objs) {
+            // Magical rotation code here
+            let preX = -this.xOffset - this.length / 2;
+            let preY = this.yOffset;
+            let angle = this.parent.angle + (this.angle * Math.PI / 180) + Math.PI;
+            objs.push(new module.exports.Bullet(
+                this.parent.x + preX * Math.cos(angle) - preY * Math.sin(angle),
+                this.parent.y + preY * Math.cos(angle) + preX * Math.sin(angle),
+                this.width / 2, this.length / 10,
+                this.parent.angle + this.angle * (Math.PI / 180),
+                100, this.parent.ID
+            )
+            );
+        }
     },
     Bullet: class {
-        constructor(x, y, speed, angle, damage, ownerID) {
+        constructor(x, y, r, speed, angle, damage, ownerID) {
             this.x = x;
             this.y = y;
+            this.r = r;
+            this.type = "bullet";
             this.dx = Math.cos(angle) * speed;
             this.dy = Math.sin(angle) * speed;
             this.damage = damage;
+            this.health = 20;
             this.ownerID = ownerID;
+            this.age = 0;
+            this.dead = false;
+            this.lifetime = 400;
+        }
+        update() {
+            this.age++
+            if (this.age > this.lifetime) {
+                this.dead = true;
+            }
+            this.x += this.dx;
+            this.y += this.dy;
         }
     }
 }

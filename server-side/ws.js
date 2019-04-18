@@ -1,16 +1,17 @@
-var qt = require("./QuadTree.js");
-var diep = require("./Diep.js");
+let qt = require("./QuadTree.js");
+let diep = require("./Diep.js");
 
-var WebSockerServer = require("ws").Server;
-var wss = new WebSockerServer({ port: 3000 })
-var tanks = [];
-var activeConnections = [];
-var IDcounter = 0;
+let WebSockerServer = require("ws").Server;
+let wss = new WebSockerServer({ port: 3000 })
+let tanks = [];
+let objs = [];
+let activeConnections = [];
+let IDcounter = 0;
 // World width, world height
-var ww = 10000;
-var wh = 10000;
-started = false;
-var q = new qt.QuadTree(0, 0, ww, wh, 2);
+let ww = 10000;
+let wh = 10000;
+let started = false;
+let q = new qt.QuadTree(0, 0, ww, wh, 2);
 
 wss.on("connection", (ws) => {
 
@@ -25,8 +26,8 @@ wss.on("connection", (ws) => {
             let tankInfo = tankInfoFromFTBJSON(msg.data);
             tanks.push(
                 new diep.Tank(
-                    ww / 2 + (Math.random() * 500 - 250), // X pos
-                    wh / 2 + (Math.random() * 500 - 250), // Y pos
+                    ww / 2 /*+ (Math.random() * 500 - 250)*/, // X pos
+                    wh / 2 /*+ (Math.random() * 500 - 250)*/, // Y pos
                     0, // X velocity
                     0, // Y velocity
                     tankInfo.bodyRadius, // Body radius
@@ -42,7 +43,7 @@ wss.on("connection", (ws) => {
         } else if (msg.type === "playerinputs") {
             let tank = findTankByID(msg.ID);
             // Handle player inputs and update tank
-            tank.handleInputs(msg);
+            tank.handleInputs(msg, objs);
         }
 
     });
@@ -54,17 +55,27 @@ wss.on("connection", (ws) => {
     }
 });
 
-var f = 0;
+let f = 0;
 function serverLoop() {
     f++;
     // Make a quadtree and insert all tanks
     q = new qt.QuadTree(0, 0, ww, wh, 2, true);
+    q2 = new qt.QuadTree(0, 0, ww, wh, 5, true);
     for (let tank of tanks) {
         q.insert(tank);
-    }
-    for (let tank of tanks) {
+        // Update tanks and do collision
         tank.update();
         tank.collisionDetect(q);
+    }
+    // Objects such as bullets
+    for (let obj of objs) {
+        q2.insert(obj);
+        obj.update();
+    }
+    for (let i = objs.length - 1; i >= 0; i--) {
+        if (objs[i].dead) {
+            objs.splice(i, 1);
+        }
     }
 
     if (f % 200 == 0) {
@@ -82,6 +93,7 @@ function serverLoop() {
                 activeConnections[i].ws.send(JSON.stringify({ ID: activeConnections[i].ID, type: "id" }));
                 // Send the client data about all the tanks around them
                 activeConnections[i].ws.send(JSON.stringify({ tanks: q.fetchBox(playerTank.x - playerTank.screenWidth / 2, playerTank.y - playerTank.screenHeight / 2, playerTank.screenWidth, playerTank.screenHeight), type: "tankdata" }));
+                activeConnections[i].ws.send(JSON.stringify({ objs: q2.fetchBox(playerTank.x - playerTank.screenWidth / 2, playerTank.y - playerTank.screenHeight / 2, playerTank.screenWidth, playerTank.screenHeight), type: "objdata" }));
             } else {
                 // If the connection is not open, remove the connection from the activeConnections array and the associated tank
                 for (let j = tanks.length - 1; j >= 0; j--) {
@@ -94,17 +106,17 @@ function serverLoop() {
         }
     }
 
-    setTimeout(serverLoop, 10);
+    setTimeout(serverLoop, 20);
 }
 
 // Takes FTB json and translates it into an array of diep-clone barrels
 function tankInfoFromFTBJSON(jsonString) {
-    var ret = [];
+    let ret = [];
     let tankInfo = jsonString.match(/[^\[]*/)[0].split('*');
     let bodyRadius = tankInfo[0] * 0.625;
     let bodyColor = tankInfo[2];
     let barrelInfo = jsonString.slice(jsonString.match(/[^\[]*/)[0].length);
-    var barrelArray = JSON.parse(barrelInfo);
+    let barrelArray = JSON.parse(barrelInfo);
     for (let barrel of barrelArray) {
         ret.push(
             new diep.Barrel(
@@ -120,7 +132,7 @@ function tankInfoFromFTBJSON(jsonString) {
             )
         );
     }
-    return { barrels: ret, bodyRadius, bodyColor};
+    return { barrels: ret, bodyRadius, bodyColor };
 }
 
 // Used for taking a connection ID and returning the tank with the same ID

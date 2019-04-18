@@ -1,20 +1,21 @@
-var w;
-var h;
-var ctx;
-var ID;
-var tanks;
-var f = 0;
-var cameraPos = {
+let w;
+let h;
+let ctx;
+let ID;
+let tanks = [];
+let objs = [];
+let f = 0;
+let cameraPos = {
     x: undefined,
     y: undefined
 }
-var looping = false;
+let looping = false;
 function startGame() {
-
-    var ws = new WebSocket("ws://50.96.154.105:3000");
-    var c = document.getElementById("game");
-    var ninput = document.getElementById("nicknameinput");
-    var finput = document.getElementById("ftbinput");
+    initializeInputHandling();
+    let ws = new WebSocket("ws://50.96.154.105:3000");
+    let c = document.getElementById("game");
+    let ninput = document.getElementById("nicknameinput");
+    let finput = document.getElementById("ftbinput");
     document.getElementById("title").style = "visibility: hidden;";
     ninput.style = "visibility: hidden;";
     finput.style = "visibility: hidden;";
@@ -40,6 +41,8 @@ function startGame() {
             }
         } else if (msg.type == "ping") {
             ping = new Date().getTime() - msg.timestamp;
+        } else if (msg.type == "objdata") {
+            objs = msg.objs;
         }
     }
 
@@ -52,13 +55,25 @@ function startGame() {
         ctx.fillText(`Current ping: ${ping} ms`, w - 90, 20);
 
         ws.send(JSON.stringify({ keys: keys, mouse: { x: mouse.x + cameraPos.x - w / 2, y: mouse.y + cameraPos.y - h / 2, left: leftMouseClicked, right: rightMouseClicked }, ID, type: "playerinputs" }));
-        for (tank of tanks) {
+        for (let obj of objs) {
+            if (obj.type == "bullet") {
+                ctx.lineWidth = 3;
+                ctx.fillStyle = "#00b2e1";
+                ctx.strokeStyle = ColorLuminance("#00b2e1", -0.23);
+                ctx.beginPath();
+                ctx.arc(obj.x - cameraPos.x + w / 2, obj.y - cameraPos.y + h / 2, obj.r, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            }
+        }
+        for (let tank of tanks) {
             if (tank.ID === ID) {
                 cameraPos.x = tank.x;
                 cameraPos.y = tank.y;
             }
             drawTank(tank);
         }
+
         requestAnimationFrame(gameLoop);
     }
 }
