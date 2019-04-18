@@ -60,7 +60,7 @@ function serverLoop() {
     f++;
     // Make a quadtree and insert all tanks
     q = new qt.QuadTree(0, 0, ww, wh, 2, true);
-    q2 = new qt.QuadTree(0, 0, ww, wh, 5, true);
+    q2 = new qt.QuadTree(0, 0, ww, wh, 3, true);
     for (let tank of tanks) {
         q.insert(tank);
         // Update tanks and do collision
@@ -69,8 +69,8 @@ function serverLoop() {
     }
     // Objects such as bullets
     for (let obj of objs) {
-        q2.insert(obj);
         obj.update();
+        q2.insert(obj);
     }
     for (let i = objs.length - 1; i >= 0; i--) {
         if (objs[i].dead) {
