@@ -22,7 +22,23 @@ wss.on("connection", (ws) => {
 
         if (msg.type === "playertank") {
             // Recieve data about the client's tank and add it to the world
-            tanks.push(new diep.Tank(ww / 2 + (Math.random() * 500 - 250), wh / 2 + (Math.random() * 500 - 250), 0, 0, 19, msg.screenWidth, msg.screenHeight, barrelsFromFTBJSON(msg.data), msg.nickname, "#00b2e1", msg.ID));
+            let tankInfo = tankInfoFromFTBJSON(msg.data);
+            tanks.push(
+                new diep.Tank(
+                    ww / 2 + (Math.random() * 500 - 250), // X pos
+                    wh / 2 + (Math.random() * 500 - 250), // Y pos
+                    0, // X velocity
+                    0, // Y velocity
+                    tankInfo.bodyRadius, // Body radius
+                    msg.screenWidth, // Screen height
+                    msg.screenHeight, // Screen width
+                    tankInfo.barrels, // Barrel array
+                    msg.nickname, // Tank name
+                    tankInfo.bodyColor, // Body color
+                    tankInfo.barrelColor, // Barrel color
+                    msg.ID // ID
+                )
+            );
         } else if (msg.type === "playerinputs") {
             let tank = findTankByID(msg.ID);
             // Handle player inputs and update tank
@@ -53,7 +69,7 @@ function serverLoop() {
 
     if (f % 200 == 0) {
         for (let connection of activeConnections) {
-            connection.ws.send(JSON.stringify({timestamp: new Date().getTime(), type: "ping"}));
+            connection.ws.send(JSON.stringify({ timestamp: new Date().getTime(), type: "ping" }));
         }
     }
 
@@ -82,13 +98,29 @@ function serverLoop() {
 }
 
 // Takes FTB json and translates it into an array of diep-clone barrels
-function barrelsFromFTBJSON(jsonString) {
+function tankInfoFromFTBJSON(jsonString) {
     var ret = [];
-    var jsonArray = JSON.parse(jsonString);
-    for (let json of jsonArray) {
-        ret.push(new diep.Barrel(json.xoffset * 0.625, json.yoffset * 0.625, json.width * 0.625, json.length * 0.625, json.angle, json.basereload, json.basedelay, json.damage, json.spread, json.type));
+    let tankInfo = jsonString.match(/[^\[]*/)[0].split('*');
+    let bodyRadius = tankInfo[0] * 0.625;
+    let bodyColor = tankInfo[2];
+    let barrelInfo = jsonString.slice(jsonString.match(/[^\[]*/)[0].length);
+    var barrelArray = JSON.parse(barrelInfo);
+    for (let barrel of barrelArray) {
+        ret.push(
+            new diep.Barrel(
+                barrel.xoffset * 0.625,
+                barrel.yoffset * 0.625,
+                barrel.width * 0.625,
+                barrel.length * 0.625,
+                barrel.angle,
+                barrel.basereload,
+                barrel.basedelay,
+                barrel.damage,
+                barrel.spread
+            )
+        );
     }
-    return ret;
+    return { barrels: ret, bodyRadius, bodyColor};
 }
 
 // Used for taking a connection ID and returning the tank with the same ID

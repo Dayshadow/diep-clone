@@ -4,7 +4,7 @@ Number.prototype.clamp = function (min, max) {
 };
 module.exports = {
     Tank: class {
-        constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, ID) {
+        constructor(x, y, dx, dy, r, screenWidth, screenHeight, barrels, nickname, color, barrelColor,  ID) {
             this.x = x;
             this.y = y;
             this.dx = dx;
@@ -14,9 +14,10 @@ module.exports = {
             this.screenHeight = screenHeight;
             this.barrels = barrels;
             this.color = color;
+            this.barrelColor = barrelColor;
             this.nickname = nickname;
             this.angle = 0;
-            this.moveSpeed = 0.143;
+            this.moveSpeed = 0.1;
             this.topSpeed = 7.8;
             this.ID = ID;
         }
