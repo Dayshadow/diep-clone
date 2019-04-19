@@ -156,7 +156,7 @@ module.exports = {
                 this.parent.x + preX * Math.cos(angle) - preY * Math.sin(angle),
                 this.parent.y + preY * Math.cos(angle) + preX * Math.sin(angle),
                 this.width / 2, this.length / 10,
-                this.parent.angle + this.angle * (Math.PI / 180),
+                this.parent.angle + this.angle * (Math.PI / 180) + (Math.random() * this.spread - this.spread / 2),
                 this.damage, this.parent.ID
             )
             );

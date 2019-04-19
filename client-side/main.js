@@ -10,6 +10,7 @@ let cameraPos = {
     y: undefined
 }
 let looping = false;
+let sentTankData = false;
 function startGame() {
     initializeInputHandling();
     let ws = new WebSocket("ws://50.96.154.105:3000");
@@ -32,12 +33,15 @@ function startGame() {
         msg = JSON.parse(message.data);
         if (msg.type === "tankdata") {
             tanks = msg.tanks;
+            if (!looping) {
+                gameLoop();
+                looping = true;
+            }
         } else if (msg.type === 'id') {
             ID = msg.ID;
-            if (!looping) {
+            if (!looping && !sentTankData) {
                 ws.send(JSON.stringify({ data: finput.value, nickname: ninput.value, screenWidth: w, screenHeight: h, type: "playertank", ID }));
-                setTimeout(()=>gameLoop(),100);
-                looping = true;
+                sentTankData = true;
             }
         } else if (msg.type === "ping") {
             ping = new Date().getTime() - msg.timestamp;
