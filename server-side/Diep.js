@@ -116,7 +116,8 @@ module.exports = {
             this.initialLength = length;
             this.angle = angle;
             this.reloadMax = reload;
-            this.reloadCounter = reload;
+            this.reloadTimer = reload;
+            this.canShoot = true;
             this.delayMax = delay;
             this.delayCounter = 0;
             this.damage = damage;
@@ -124,18 +125,27 @@ module.exports = {
             this.type = type || 0;
         }
         update(objs) {
+            if (this.reloadTimer == 0) {
+                this.canShoot = true;
+            } else {
+                this.canShoot = false;
+            }
+            if (this.reloadTimer > 0) {
+                this.reloadTimer--;
+            }
             this.delayCounter++;
             if (this.delayCounter > this.delayMax) {
-                this.reloadCounter++;
-                if (this.reloadCounter > this.reloadMax) {
-                    this.reloadCounter = 0;
+                if (this.canShoot) {
+                    this.reloadTimer = this.reloadMax;
                     this.shoot(objs);
                 }
             }
         }
         reset() {
             this.delayCounter = 0;
-            this.reloadCounter = 0;
+            if (this.reloadTimer > 0) {
+                this.reloadTimer--;
+            }
         }
         shoot(objs) {
             // Magical rotation code here
