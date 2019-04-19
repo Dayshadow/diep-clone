@@ -11,7 +11,8 @@ let IDcounter = 0;
 let ww = 10000;
 let wh = 10000;
 let started = false;
-let q = new qt.QuadTree(0, 0, ww, wh, 2);
+let q;
+let q2;
 
 wss.on("connection", (ws) => {
 
@@ -43,7 +44,11 @@ wss.on("connection", (ws) => {
         } else if (msg.type === "playerinputs") {
             let tank = findTankByID(msg.ID);
             // Handle player inputs and update tank
-            tank.handleInputs(msg, objs);
+            if (tank) {
+                if (!tank.dead) {
+                    tank.handleInputs(msg, objs);
+                }
+            }
         }
 
     });
@@ -61,23 +66,26 @@ function serverLoop() {
     // Make a quadtree and insert all tanks
     q = new qt.QuadTree(0, 0, ww, wh, 2, true);
     q2 = new qt.QuadTree(0, 0, ww, wh, 3, true);
-    for (let tank of tanks) {
-        q.insert(tank);
-        // Update tanks and do collision
-        tank.update();
-        tank.collisionDetect(q);
-    }
-    // Objects such as bullets
-    for (let obj of objs) {
-        obj.update();
-        q2.insert(obj);
-    }
+    // Objects such as bullets are moved and inserted into the quadtree
     for (let i = objs.length - 1; i >= 0; i--) {
+        objs[i].collisionDetect(q2);
+        objs[i].update();
+        q2.insert(objs[i]);
         if (objs[i].dead) {
             objs.splice(i, 1);
         }
     }
 
+
+    for (tank of tanks) {
+        if (tank) {
+            if (!tank.dead) {
+                tank.collisionDetect(q, q2);
+                tank.update();
+                q.insert(tank);
+            }
+        }
+    }
     if (f % 200 == 0) {
         for (let connection of activeConnections) {
             connection.ws.send(JSON.stringify({ timestamp: new Date().getTime(), type: "ping" }));
@@ -106,7 +114,7 @@ function serverLoop() {
         }
     }
 
-    setTimeout(serverLoop, 20);
+    setTimeout(serverLoop, 14);
 }
 
 // Takes FTB json and translates it into an array of diep-clone barrels
@@ -143,3 +151,18 @@ function findTankByID(id) {
         }
     }
 }
+
+const readline = require('readline');
+
+function processConsole() {
+    var rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+    rl.question('Enter a command: ', (answer) => {
+        eval(answer);
+        rl.close();
+        processConsole();
+    });
+}
+processConsole();

@@ -36,12 +36,12 @@ function startGame() {
             ID = msg.ID;
             if (!looping) {
                 ws.send(JSON.stringify({ data: finput.value, nickname: ninput.value, screenWidth: w, screenHeight: h, type: "playertank", ID }));
-                gameLoop();
+                setTimeout(()=>gameLoop(),100);
                 looping = true;
             }
-        } else if (msg.type == "ping") {
+        } else if (msg.type === "ping") {
             ping = new Date().getTime() - msg.timestamp;
-        } else if (msg.type == "objdata") {
+        } else if (msg.type === "objdata") {
             objs = msg.objs;
         }
     }
@@ -50,6 +50,15 @@ function startGame() {
         ctx.fillStyle = "#cdcdcd"
         ctx.fillRect(0, 0, w, h);
         f++;
+        let found = false;
+        for (let tank of tanks) {
+            if (tank.ID == ID) {
+                found = true;
+            }
+        }
+        if (!found) {
+            document.location.reload();
+        }
         drawBackground();
         ctx.fillStyle = "#111111"
         ctx.fillText(`Current ping: ${ping} ms`, w - 90, 20);
@@ -57,13 +66,11 @@ function startGame() {
         ws.send(JSON.stringify({ keys: keys, mouse: { x: mouse.x + cameraPos.x - w / 2, y: mouse.y + cameraPos.y - h / 2, left: leftMouseClicked, right: rightMouseClicked }, ID, type: "playerinputs" }));
         for (let obj of objs) {
             if (obj.type == "bullet") {
-                ctx.lineWidth = 3;
-                ctx.fillStyle = "#00b2e1";
-                ctx.strokeStyle = ColorLuminance("#00b2e1", -0.23);
-                ctx.beginPath();
-                ctx.arc(obj.x - cameraPos.x + w / 2, obj.y - cameraPos.y + h / 2, obj.r, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
+                if (obj.ownerID == ID) {
+                    diepCircle(obj.x - cameraPos.x + w / 2, obj.y - cameraPos.y + h / 2, obj.r, "#00b2e1");
+                } else {
+                    diepCircle(obj.x - cameraPos.x + w / 2, obj.y - cameraPos.y + h / 2, obj.r, "#f14e54");
+                }
             }
         }
         for (let tank of tanks) {

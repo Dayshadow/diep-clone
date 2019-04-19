@@ -10,12 +10,14 @@ module.exports = {
             this.dx = dx;
             this.dy = dy;
             this.r = r;
-            this.health = 100;
+            this.health = 1000;
+            this.maxHealth = this.health;
+            this.dead = false;
             this.screenWidth = screenWidth;
             this.screenHeight = screenHeight;
             this.barrels = barrels;
             for (let barrel of this.barrels) {
-                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID };
+                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID, dead: false };
             }
             this.color = color;
             this.barrelColor = barrelColor;
@@ -26,8 +28,11 @@ module.exports = {
             this.ID = ID;
         }
         update() {
+            if (this.health < 0) {
+                this.dead = true;
+            }
             for (let barrel of this.barrels) {
-                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID };
+                barrel.parent = { x: this.x, y: this.y, angle: this.angle, ID: this.ID, dead: this.dead };
             }
             this.x += this.dx;
             this.y += this.dy;
@@ -36,15 +41,31 @@ module.exports = {
             this.dx *= 0.98;
             this.dy *= 0.98;
         }
-        collisionDetect(q) {
+        collisionDetect(q, q2) {
             let canidates = q.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);
-            for (let object of canidates) {
-                if (utils.dist(this.x, this.y, object.x, object.y) < this.r * 2) {
-                    let angle = Math.atan2(this.y - object.y, this.x - object.x);
+            for (let tank of canidates) {
+                if (utils.dist(this.x, this.y, tank.x, tank.y) < this.r + tank.r) {
+                    let angle = Math.atan2(this.y - tank.y, this.x - tank.x);
                     this.dx += Math.cos(angle) / 8;
                     this.dy += Math.sin(angle) / 8;
-                    object.dx += Math.cos(angle + Math.PI) / 8;
-                    object.dy += Math.sin(angle + Math.PI) / 8;
+                    tank.dx += Math.cos(angle + Math.PI) / 8;
+                    tank.dy += Math.sin(angle + Math.PI) / 8;
+                }
+            }
+            canidates = q2.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);
+            for (let object of canidates) {
+                if (utils.dist(this.x, this.y, object.x, object.y) < this.r + object.r) {
+                    if (object.type === 'bullet') {
+                        if (object.ownerID != this.ID) {
+                            let angle = Math.atan2(this.y - object.y, this.x - object.x);
+                            this.dx += Math.cos(angle) / 4;
+                            this.dy += Math.sin(angle) / 4;
+                            object.dx += Math.cos(angle + Math.PI) / 4;
+                            object.dy += Math.sin(angle + Math.PI) / 4;
+                            this.health -= object.damage;
+                            object.health -= 70;
+                        }
+                    }
                 }
             }
         }
@@ -140,19 +161,35 @@ module.exports = {
             this.dx = Math.cos(angle) * speed;
             this.dy = Math.sin(angle) * speed;
             this.damage = damage;
-            this.health = 20;
+            this.health = 200;
             this.ownerID = ownerID;
             this.age = 0;
             this.dead = false;
-            this.lifetime = 400;
+            this.lifetime = 230;
         }
         update() {
             this.age++
-            if (this.age > this.lifetime) {
+            if (this.age > this.lifetime || this.health < 0) {
                 this.dead = true;
             }
             this.x += this.dx;
             this.y += this.dy;
+        }
+        collisionDetect(q2) {
+            let canidates = q2.fetchBox(this.x - this.r * 2, this.y - this.r * 2, this.r * 4, this.r * 4);
+            for (let object of canidates) {
+                if (utils.dist(this.x, this.y, object.x, object.y) < this.r + object.r) {
+                    if (object.type === 'bullet' && object.ownerID != this.ownerID) {
+                        let angle = Math.atan2(this.y - object.y, this.x - object.x);
+                        this.dx += Math.cos(angle) / 4;
+                        this.dy += Math.sin(angle) / 4;
+                        object.dx += Math.cos(angle + Math.PI) / 4;
+                        object.dy += Math.sin(angle + Math.PI) / 4;
+                        this.health -= object.damage;
+                        object.health -= this.damage;
+                    }
+                }
+            }
         }
     }
 }
