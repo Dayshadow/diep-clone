@@ -65,7 +65,7 @@ const drawTank = (tank) => {
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(tank.x - cameraPos.x + w / 2 - healthbarWidth / 2, tank.y - cameraPos.y + h / 2 + tank.r + 10);
-    ctx.lineTo(tank.x - cameraPos.x + w / 2 + rangeMap(tank.health, 0, tank.maxHealth, 0, healthbarWidth) / 2, tank.y - cameraPos.y + h / 2 + tank.r + 10);
+    ctx.lineTo(tank.x - cameraPos.x + w / 2 + rangeMap(tank.health, 0, tank.maxHealth, -healthbarWidth, healthbarWidth) / 2, tank.y - cameraPos.y + h / 2 + tank.r + 10);
     ctx.stroke();
 }
 let gridSquareSize = 18;
